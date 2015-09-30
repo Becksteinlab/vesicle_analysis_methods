@@ -8,24 +8,29 @@ import numpy as np
 import pandas as pd
 import glob
 
+# Set global variables
+
 systems_dir = "/nfs/homes/ikenney/Projects/vesicles/scripts/analysis/systems/"
 fig_dir = "/nfs/homes/ikenney/Projects/vesicles/scripts/analysis/figs/"
 hostname = "spuddafett"
 data_dir = "/nfs/homes/ikenney/Projects/vesicles/scripts/analysis/data/"
+critical_components = ["load_tpr_xtc","load_pdb","load_gro","load_pdb_xtc","load_gro_xtc"]
+
+# Initial run will identify missing systems and missing data
 
 def integrity(systems,N=40):
-    critical_components = ["load_tpr_xtc","load_pdb","load_gro","load_pdb_xtc","load_gro_xtc"]
-    tobuild = []
-    tofill = []
+    tobuild = [] # Elements will have _build() run on them
+    tofill = [] # Elements will have _fill() run on them
     
+    # Detect new systems and missing data
     for x in [y.split("/")[-1] for y in glob.glob(systems_dir+"*")]:
-        if x not in systems.index.tolist():
+        if x not in systems.index.tolist(): # Missing systems 
             print "\'{}\' not found. Build? (y/n)".format(x)
             userinput = raw_input("Build:\t")
             if userinput.lower() == 'y':
                 tobuild.append(x)
                 print("Added to build list.\n")
-        else:
+        else: # Missing data
             for y in systems.columns.tolist():
                 if systems[y].isnull().loc[x] and y in critical_components:
                     print("{} missing from {}. Fill in data? (y/n)".format(y,x))
@@ -36,47 +41,47 @@ def integrity(systems,N=40):
     newsys = systems
     
     for s in tobuild:
-        newsys=newsys.append(_build(s,systems,N=N))
+        newsys = newsys.append(_build(s,systems,N=N))
     
     return newsys.sort(columns=['sizes'])
 
 ### POPULATION FUNCTIONS ###
 
-def populate_rad_gyr(sysname,table):
+def populate_rad_gyr(sysname,table): # Handle radius of gyration calculations
     table['rgyr'].loc[sysname] = _radius_gyration_performance([table['tops'],table['traj']])
     table['rgyr_mean'].loc[sysname] = np.mean(table['rgyr'].loc[sysname])
     table['rgyr_std'].loc[sysname] = np.std(table['rgyr'].loc[sysname])
     return True
 
-def populate_tpr_xtc(sysname,table,N=40): 
+def populate_tpr_xtc(sysname,table,N=40): # Handle loading tpr and xtc
     column = "load_tpr_xtc"
     table[column].loc[sysname] = _tpr_xtc_load(sysname,table,N)
     table[column+'_mean'].loc[sysname] = np.mean(table[column].loc[sysname])
     table[column+'_std'].loc[sysname] = np.std(table[column].loc[sysname])
     return True
 
-def populate_gro(sysname,table,N=40): 
+def populate_gro(sysname,table,N=40): # Handle loading gro
     column = "load_gro"
     table[column].loc[sysname] = _gro_load(sysname,table,N)
     table[column+'_mean'].loc[sysname] = np.mean(table[column].loc[sysname])
     table[column+'_std'].loc[sysname] = np.std(table[column].loc[sysname])
     return True
 
-def populate_pdb(sysname,table,N=40): 
+def populate_pdb(sysname,table,N=40): # Handle loading pdb 
     column = "load_pdb"
     table[column].loc[sysname] = _pdb_load(sysname,table,N)
     table[column+'_mean'].loc[sysname] = np.mean(table[column].loc[sysname])
     table[column+'_std'].loc[sysname] = np.std(table[column].loc[sysname])
     return True
 
-def populate_pdb_xtc(sysname,table,N=40): 
+def populate_pdb_xtc(sysname,table,N=40): # Handle loading pdb xtc
     column = "load_pdb_xtc"
     table[column].loc[sysname] = _pdb_xtc_load(sysname,table,N)
     table[column+'_mean'].loc[sysname] = np.mean(table[column].loc[sysname])
     table[column+'_std'].loc[sysname] = np.std(table[column].loc[sysname])
     return True
 
-def populate_gro_xtc(sysname,table,N=40): 
+def populate_gro_xtc(sysname,table,N=40): # Handle loading gro and xtc
     column = "load_gro_xtc"
     table[column].loc[sysname] = _gro_xtc_load(sysname,table,N)
     table[column+'_mean'].loc[sysname] = np.mean(table[column].loc[sysname])
