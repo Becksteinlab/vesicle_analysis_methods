@@ -88,8 +88,6 @@ def populate_gro_xtc(sysname,table,N=40): # Handle loading gro and xtc
     table[column+'_std'].loc[sysname] = np.std(table[column].loc[sysname])
     return True
 
-
-
 ### Computation Functions ###
 
 def _radius_gyration_performance(a):
@@ -118,7 +116,7 @@ def _gro_load(sysname,table,N=40):
 def _pdb_load(sysname,table,N=40):
     def load():
         start = time.time()
-        mda.Universe(table['pdb'].loc[sysname])
+        mda.Universe(table['pdbs'].loc[sysname])
         return time.time() - start
     return [load() for _ in range(N)]
 
@@ -177,3 +175,4 @@ def _build(system_name,systems,N=40):
             
     buildrow['sizes'] = mda.Universe(buildrow['tops'].ix[-1]).atoms.n_atoms
     return buildrow
+
