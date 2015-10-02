@@ -25,7 +25,7 @@ def integrity(systems,N=40):
     # Detect new systems and missing data
     for x in [y.split("/")[-1] for y in glob.glob(systems_dir+"*")]:
         if x not in systems.index.tolist(): # Missing systems 
-            print "\'{}\' not found. Build? (y/n)".format(x)
+            print "\'{}\' not found in data set. Build? (y/n)".format(x)
             userinput = raw_input("Build:\t")
             if userinput.lower() == 'y':
                 tobuild.append(x)
@@ -42,7 +42,7 @@ def integrity(systems,N=40):
     
     for s in tobuild:
         newsys = newsys.append(_build(s,systems,N=N))
-    
+    pd.to_pickle("backup.df")
     return newsys.sort(columns=['sizes'])
 
 ### POPULATION FUNCTIONS ###
