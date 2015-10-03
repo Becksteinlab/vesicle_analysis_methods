@@ -207,15 +207,37 @@ def _fill(system_info,system,N=40):
 
     comps = column.split("_")[1:-1]
     continuation = True
+
+    system = _check_resources(system_name,system)
     
     for c in comps:
         if system[column].isnull().loc[system_name]:
             print("Missing components to fill data table: {}, {}".format(system_name,column))
+            
             continuation = False
 
     if not continuation:
-        exit(1)
+        exit()
 
     system[column].loc[system_name] = function_dict[column](system_name,system,N=N)
         
     return system
+
+def _check_resources(system_name,systems):
+    if systems['gros'].isnull().loc[system_name]:
+        if os.path.exists(base_dir+'/emin/emin.gro'):
+            systems['gros'].loc[system_name] = base_dir+'/emin/emin.gro'
+        
+    if systems['pdbs'].isnull().loc[system_name]:
+        if os.path.exists(base_dir+'/emin/emin.pdb'):
+            systems['pdbs'].loc[system_name] = base_dir+'/emin/emin.pdb'
+            
+    if systems['tops'].isnull().loc[system_name]:
+        if os.path.exists(base_dir+'/nvt/nvt.tpr'):
+            systems['tops'].loc[system_name] = base_dir+'/nvt/nvt.tpr'
+            
+    if systems['traj'].notnull().loc[system_name]:
+        if os.path.exists(base_dir+'/nvt/analysis.xtc'):
+            systems['traj'].loc[system_name] = base_dir+'/nvt/analysis.xtc'
+
+    return systems
