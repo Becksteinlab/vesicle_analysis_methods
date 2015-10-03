@@ -94,7 +94,6 @@ def populate_gro_xtc(sysname,table,N=40): # Handle loading gro and xtc
 
 ### Computation Functions ###
 
-function_dict['rgyr'] = _radius_gyration_performance
 def _radius_gyration_performance(a):
     u = mda.Universe(a[0][-1],a[1][-1])
     vals = []
@@ -104,7 +103,9 @@ def _radius_gyration_performance(a):
         vals.append(time.time()-start)
     return vals
 
-function_dict['load_tpr_xtc'] = _tpr_xtc_load
+
+function_dict['rgyr'] = _radius_gyration_performance
+
 def _tpr_xtc_load(sysname,table,N=40):
     def load():
         start = time.time()
@@ -112,7 +113,8 @@ def _tpr_xtc_load(sysname,table,N=40):
         return time.time() - start
     return [load() for _ in range(N)]
 
-function_dict['load_gro'] = _gro_load
+function_dict['load_tpr_xtc'] = _tpr_xtc_load
+
 def _gro_load(sysname,table,N=40):
     def load():
         start = time.time()
@@ -120,7 +122,8 @@ def _gro_load(sysname,table,N=40):
         return time.time() - start
     return [load() for _ in range(N)]
 
-function_dict['load_pdb'] = _pdb_load
+function_dict['load_gro'] = _gro_load
+
 def _pdb_load(sysname,table,N=40):
     def load():
         start = time.time()
@@ -128,7 +131,8 @@ def _pdb_load(sysname,table,N=40):
         return time.time() - start
     return [load() for _ in range(N)]
 
-function_dict['load_gro_xtc'] = _gro_xtc_load
+function_dict['load_pdb'] = _pdb_load
+
 def _gro_xtc_load(sysname,table,N=40):
     def load():
         start = time.time()
@@ -136,13 +140,17 @@ def _gro_xtc_load(sysname,table,N=40):
         return time.time() - start
     return [load() for _ in range(N)]
 
-function_dict['load_pdb_xtc'] = _pdb_xtc_load
+function_dict['load_gro_xtc'] = _gro_xtc_load
+
 def _pdb_xtc_load(sysname,table,N=40):
     def load():
         start = time.time()
         mda.Universe(table['pdbs'].loc[sysname],table['traj'].loc[sysname])
         return time.time() - start
     return [load() for _ in range(N)]
+
+function_dict['load_pdb_xtc'] = _pdb_xtc_load
+
 
 def _build(system_name,systems,N=40):
     base_dir = systems_dir + system_name
