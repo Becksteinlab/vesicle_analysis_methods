@@ -39,14 +39,15 @@ def integrity(systems,N=40):
                     userinput = raw_input("Fill:\t")
                     if userinput.lower() == 'y':
                         tofill.append([y,x])
+                        print([x,y])
                         print("Added to fill list.\n")
     newsys = systems
     
     for s in tobuild:
         newsys = newsys.append(_build(s,systems,N=N))
     for s in tofill:
-        newsys = newsys.append(_fill(s,systems,N=N))
-    pd.to_pickle("backup.df")
+        newsys = _fill(s,systems,N=N)
+    newsys.to_pickle("backup.df")
     return newsys.sort(columns=['sizes'])
 
 ### POPULATION FUNCTIONS ###
@@ -201,8 +202,10 @@ def _fill(system_info,system,N=40):
     base_dir = systems_dir + system_name
 
     print("Filling in data from: " + base_dir)
+    
+    print(column)
 
-    comps = system.split("_")[1:-1]
+    comps = column.split("_")[1:-1]
     continuation = True
     
     for c in comps:
@@ -215,4 +218,4 @@ def _fill(system_info,system,N=40):
 
     function_dict[column](system_name,system,N=N)
         
-    return True
+    return system
