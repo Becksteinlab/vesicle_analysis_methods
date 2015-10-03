@@ -16,6 +16,8 @@ hostname = "spuddafett"
 data_dir = "/nfs/homes/ikenney/Projects/vesicles/scripts/analysis/data/"
 critical_components = ["load_tpr_xtc","load_pdb","load_gro","load_pdb_xtc","load_gro_xtc"]
 
+function_dict = {}
+
 # Initial run will identify missing systems and missing data
 
 def integrity(systems,N=40):
@@ -42,6 +44,8 @@ def integrity(systems,N=40):
     
     for s in tobuild:
         newsys = newsys.append(_build(s,systems,N=N))
+    for s in tofill:
+        newsys = newsys.append(_fill(s,systems,N=N))
     pd.to_pickle("backup.df")
     return newsys.sort(columns=['sizes'])
 
@@ -90,6 +94,7 @@ def populate_gro_xtc(sysname,table,N=40): # Handle loading gro and xtc
 
 ### Computation Functions ###
 
+function_dict['rgyr'] = _radius_gyration_performance
 def _radius_gyration_performance(a):
     u = mda.Universe(a[0][-1],a[1][-1])
     vals = []
@@ -99,6 +104,7 @@ def _radius_gyration_performance(a):
         vals.append(time.time()-start)
     return vals
 
+function_dict['load_tpr_xtc'] = _tpr_xtc_load
 def _tpr_xtc_load(sysname,table,N=40):
     def load():
         start = time.time()
@@ -106,6 +112,7 @@ def _tpr_xtc_load(sysname,table,N=40):
         return time.time() - start
     return [load() for _ in range(N)]
 
+function_dict['load_gro'] = _gro_load
 def _gro_load(sysname,table,N=40):
     def load():
         start = time.time()
@@ -113,6 +120,7 @@ def _gro_load(sysname,table,N=40):
         return time.time() - start
     return [load() for _ in range(N)]
 
+function_dict['load_pdb'] = _pdb_load
 def _pdb_load(sysname,table,N=40):
     def load():
         start = time.time()
@@ -120,6 +128,7 @@ def _pdb_load(sysname,table,N=40):
         return time.time() - start
     return [load() for _ in range(N)]
 
+function_dict['load_gro_xtc'] = _gro_xtc_load
 def _gro_xtc_load(sysname,table,N=40):
     def load():
         start = time.time()
@@ -127,6 +136,7 @@ def _gro_xtc_load(sysname,table,N=40):
         return time.time() - start
     return [load() for _ in range(N)]
 
+function_dict['load_pdb_xtc'] = _pdb_xtc_load
 def _pdb_xtc_load(sysname,table,N=40):
     def load():
         start = time.time()
@@ -176,3 +186,25 @@ def _build(system_name,systems,N=40):
     buildrow['sizes'] = mda.Universe(buildrow['tops'].ix[-1]).atoms.n_atoms
     return buildrow
 
+def _fill(system_info,system,N=40):
+    system_name = system_info[1]
+    column = system_info[0]
+    
+    base_dir = systems_dir + system_name
+
+    print("Filling in data from: " + base_dir)
+
+    comps = system.split("_")[1:-1]
+    continuation = True
+    
+    for c in comps:
+        if system[column].isnull().loc[system_name]:
+            print("Missing components to fill data table: {}, {}".format(system_name,column))
+            continuation = False
+
+    if not continuation:
+        exit(1)
+
+    function_dict[column](system_name,system,N=N)
+        
+    return True
