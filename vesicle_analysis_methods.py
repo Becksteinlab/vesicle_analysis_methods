@@ -216,6 +216,6 @@ def _fill(system_info,system,N=40):
     if not continuation:
         exit(1)
 
-    function_dict[column](system_name,system,N=N)
+    system[column].loc[system_name] = function_dict[column](system_name,system,N=N)
         
     return system
