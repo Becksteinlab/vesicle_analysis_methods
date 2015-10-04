@@ -17,6 +17,10 @@ data_dir = "/nfs/homes/ikenney/Projects/vesicles/scripts/analysis/data/"
 critical_components = ["load_tpr_xtc","load_pdb","load_gro","load_pdb_xtc","load_gro_xtc"]
 
 function_dict = {}
+resource_columns = {'tpr':'tops'
+                   ,'gro':'gros'
+                   ,'pdb':'pdbs'
+                   ,'xtc':'traj'}
 
 # Initial run will identify missing systems and missing data
 
@@ -202,8 +206,6 @@ def _fill(system_info,system,N=40):
     base_dir = systems_dir + system_name
 
     print("Filling in data from: " + base_dir)
-    
-    print(column)
 
     comps = column.split("_")[1:-1]
     continuation = True
@@ -211,19 +213,25 @@ def _fill(system_info,system,N=40):
     system = _check_resources(system_name,system)
     
     for c in comps:
-        if system[column].isnull().loc[system_name]:
+        if system[resource_columns[c]].isnull().loc[system_name]:
+            print(c)
             print("Missing components to fill data table: {}, {}".format(system_name,column))
             
             continuation = False
 
     if not continuation:
-        exit()
+        import sys
+        sys.exit()
 
     system[column].loc[system_name] = function_dict[column](system_name,system,N=N)
-        
+     
+    system[column+'_mean'].loc[system_name] = np.mean(system[column].loc[system_name])
+    system[column+'_std'].loc[system_name] = np.std(system[column].loc[system_name])       
     return system
 
 def _check_resources(system_name,systems):
+    base_dir = systems_dir + system_name
+    print("checking resources")
     if systems['gros'].isnull().loc[system_name]:
         if os.path.exists(base_dir+'/emin/emin.gro'):
             systems['gros'].loc[system_name] = base_dir+'/emin/emin.gro'
@@ -236,8 +244,9 @@ def _check_resources(system_name,systems):
         if os.path.exists(base_dir+'/nvt/nvt.tpr'):
             systems['tops'].loc[system_name] = base_dir+'/nvt/nvt.tpr'
             
-    if systems['traj'].notnull().loc[system_name]:
+    if systems['traj'].isnull().loc[system_name]:
         if os.path.exists(base_dir+'/nvt/analysis.xtc'):
+            print("Adding trajectory information")
             systems['traj'].loc[system_name] = base_dir+'/nvt/analysis.xtc'
 
     return systems
