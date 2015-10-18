@@ -22,7 +22,7 @@ resource_columns = {'tpr':'tops'
                    ,'pdb':'pdbs'
                    ,'xtc':'traj'}
 
-# Initial run will identify missing systems and missing data
+# Integrity will identify missing systems and missing data
 
 def integrity(systems,N=40):
     tobuild = [] # Elements will have _build() run on them
@@ -51,6 +51,8 @@ def integrity(systems,N=40):
         newsys = newsys.append(_build(s,systems,N=N))
     for s in tofill:
         newsys = _fill(s,systems,N=N)
+    if not tobuild and not tofill:
+        print("No new systems found.")
     newsys.to_pickle("backup.df")
     return newsys.sort(columns=['sizes'])
 
@@ -216,7 +218,6 @@ def _fill(system_info,system,N=40):
         if system[resource_columns[c]].isnull().loc[system_name]:
             print(c)
             print("Missing components to fill data table: {}, {}".format(system_name,column))
-            
             continuation = False
 
     if not continuation:
@@ -224,7 +225,6 @@ def _fill(system_info,system,N=40):
         sys.exit()
 
     system[column].loc[system_name] = function_dict[column](system_name,system,N=N)
-     
     system[column+'_mean'].loc[system_name] = np.mean(system[column].loc[system_name])
     system[column+'_std'].loc[system_name] = np.std(system[column].loc[system_name])       
     return system
@@ -235,18 +235,14 @@ def _check_resources(system_name,systems):
     if systems['gros'].isnull().loc[system_name]:
         if os.path.exists(base_dir+'/emin/emin.gro'):
             systems['gros'].loc[system_name] = base_dir+'/emin/emin.gro'
-        
     if systems['pdbs'].isnull().loc[system_name]:
         if os.path.exists(base_dir+'/emin/emin.pdb'):
             systems['pdbs'].loc[system_name] = base_dir+'/emin/emin.pdb'
-            
     if systems['tops'].isnull().loc[system_name]:
         if os.path.exists(base_dir+'/nvt/nvt.tpr'):
             systems['tops'].loc[system_name] = base_dir+'/nvt/nvt.tpr'
-            
     if systems['traj'].isnull().loc[system_name]:
         if os.path.exists(base_dir+'/nvt/analysis.xtc'):
             print("Adding trajectory information")
             systems['traj'].loc[system_name] = base_dir+'/nvt/analysis.xtc'
-
     return systems
